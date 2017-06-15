@@ -1,0 +1,18 @@
+(7) When a free_user’s job is completed. At the annotator part it will publish a topic containing complete_time and job id of this file. At the utility side, the program will read that topic message from a queue to check whether 1800 seconds has past since the job is completed. If so, download the file from S3 and delete it in S3. And then archive the file to glacier.
+
+Because I do not want to check all items in the dynamoDB, hence I use a message queue to solve this problem.
+
+(9):After client.initiate_job() notifying glacier to prepare my needed file, which is down when a user upgrade to preimim_user on the web-side, on utility side, I read message from a queue which indicates whether a job is ready. Then I use client.get_job_output() to get data from glacier and store the data into a local file. Then upload the file to S3 using s3.meta.client.upload_file(). Finally, delete the local file.
+
+Because the steps of getting a file from glacier is asynchronous, I use a queue to communicate from two sides, which is the easiest way I can think of.
+
+(13 d):The test I set is 300 users, at 20/sec
+
+The first time a new instance is launched at about 90seconds after I test.
+The total successful responses is much more than 200 for 1 minute at this situation. Hence, launching a new instance to deal with request is reasonable.
+The obvious delay is resulting from many things are happening asynchronously under different AWS component.
+
+(13 e)Instance will terminate one by one until only two instances left.
+
+
+(13 f)After waiting for some time, my web-server start to shrank. Finally, there are only two server remains. Through screenshots, you can see how my server start to grow and shrank.
